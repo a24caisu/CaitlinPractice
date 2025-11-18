@@ -30,6 +30,7 @@ public class PlatformerMovement : MonoBehaviour
     private bool jumpReleased;
     private bool wasGrounded;
     private bool isGrounded;
+    Animator PlayerAnimator;
 
     [SerializeField] private Animator animator;
     
@@ -43,7 +44,7 @@ public class PlatformerMovement : MonoBehaviour
         // Set gravity scale to 0 so player won't "fall" 
         rb.gravityScale = 0;
 
-        //animator = GetComponent<Animator>();
+        PlayerAnimator = GetComponent<Animator>();
     }
     
     void Update()
@@ -62,18 +63,19 @@ public class PlatformerMovement : MonoBehaviour
         {
             if (velocity.y < 0)
             {
-                // Has fallen. Play fall sound and/or trigger fall animation etc
+                PlayerAnimator.SetBool("Up", true);
             }
             else
             {
-                // Has jumped. Play jump sound and/or trigger jump animation etc
+                PlayerAnimator.SetBool("Up", false);
+                PlayerAnimator.SetBool("Down", true);
             }
         }
         // Check if character gained contact with ground this frame
         else if (wasGrounded == false && isGrounded == true)
         {
             jumpReleased = false;
-            // Has landed, play landing sound and trigger landing animation
+            PlayerAnimator.SetBool("Down", false);
         }
         wasGrounded = isGrounded;
         
@@ -82,6 +84,7 @@ public class PlatformerMovement : MonoBehaviour
         {
             if (moveInput.x > 0.01f)
                 spriteRenderer.flipX = false;
+            
             else if (moveInput.x < -0.01f)
                 spriteRenderer.flipX = true;
         }
@@ -137,12 +140,22 @@ public class PlatformerMovement : MonoBehaviour
                 velocity.y += Physics2D.gravity.y * Time.deltaTime;
             }
         }
+
+        if (Input.GetKeyDown("d"))
+        {
+            PlayerAnimator.SetBool("Run", true);
+        }
+        if (Input.GetKeyUp("d"))
+        {
+            PlayerAnimator.SetBool("Run", false);
+        }
     }
     
     Vector2 TranslateInputToVelocity(Vector2 input)
     {
         // Make the character move along the X-axis
         return new Vector2(input.x * maxSpeed, velocity.y);
+        
     }
 
     // Handle Move-input
@@ -152,10 +165,12 @@ public class PlatformerMovement : MonoBehaviour
         if (controlEnabled)
         {
             moveInput = context.ReadValue<Vector2>().normalized;
+            
         }
         else
         {
             moveInput = Vector2.zero;
+           
         }
     }
 
