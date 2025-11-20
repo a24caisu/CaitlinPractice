@@ -1,10 +1,13 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Events;
 
             /////////////// INFORMATION ///////////////
 // This script automatically adds a Rigidbody2D, CapsuleCollider2D and CircleCollider2D component in the inspector.
 // The Rigidbody2D component should (probably) have some constraints: Freeze Rotation Z
-// The Circle Collider 2D should be set to "is trigger", resized and moved to a proper position for ground check.
+// The Circle Collider 2D should be set to "is trigger", resized and moved to a proper position.
 
 // The following components are also needed: Player Input
 // Gravity for the project is set in Unity at Edit -> Project Settings -> Physics2D -> Gravity Y
@@ -18,6 +21,7 @@ public class PlatformerMovement : MonoBehaviour
     [SerializeField] private SpriteRenderer spriteRenderer;
 
     public bool controlEnabled { get; set; } = true; // You can edit this variable from Unity Events
+    public UnityEvent onAction2;
     
     private Vector2 moveInput;
     private Rigidbody2D rb;
@@ -30,7 +34,6 @@ public class PlatformerMovement : MonoBehaviour
     private bool jumpReleased;
     private bool wasGrounded;
     private bool isGrounded;
-    Animator PlayerAnimator;
 
     [SerializeField] private Animator animator;
     
@@ -44,7 +47,7 @@ public class PlatformerMovement : MonoBehaviour
         // Set gravity scale to 0 so player won't "fall" 
         rb.gravityScale = 0;
 
-        PlayerAnimator = GetComponent<Animator>();
+        //animator = GetComponent<Animator>();
     }
     
     void Update()
@@ -63,19 +66,17 @@ public class PlatformerMovement : MonoBehaviour
         {
             if (velocity.y < 0)
             {
-                PlayerAnimator.SetBool("Up", true);
+                // Has fallen. Play fall sound and/or trigger fall animation etc
             }
             else
             {
-                PlayerAnimator.SetBool("Up", false);
-                PlayerAnimator.SetBool("Down", true);
+                // Has jumped. Play jump sound and/or trigger jump animation etc
             }
         }
         // Check if character gained contact with ground this frame
         else if (wasGrounded == false && isGrounded == true)
         {
             jumpReleased = false;
-            PlayerAnimator.SetBool("Down", false);
         }
         wasGrounded = isGrounded;
         
@@ -84,7 +85,6 @@ public class PlatformerMovement : MonoBehaviour
         {
             if (moveInput.x > 0.01f)
                 spriteRenderer.flipX = false;
-            
             else if (moveInput.x < -0.01f)
                 spriteRenderer.flipX = true;
         }
@@ -140,22 +140,12 @@ public class PlatformerMovement : MonoBehaviour
                 velocity.y += Physics2D.gravity.y * Time.deltaTime;
             }
         }
-
-        if (Input.GetKeyDown("d"))
-        {
-            PlayerAnimator.SetBool("Run", true);
-        }
-        if (Input.GetKeyUp("d"))
-        {
-            PlayerAnimator.SetBool("Run", false);
-        }
     }
     
     Vector2 TranslateInputToVelocity(Vector2 input)
     {
         // Make the character move along the X-axis
         return new Vector2(input.x * maxSpeed, velocity.y);
-        
     }
 
     // Handle Move-input
@@ -165,12 +155,10 @@ public class PlatformerMovement : MonoBehaviour
         if (controlEnabled)
         {
             moveInput = context.ReadValue<Vector2>().normalized;
-            
         }
         else
         {
             moveInput = Vector2.zero;
-           
         }
     }
 
@@ -189,6 +177,15 @@ public class PlatformerMovement : MonoBehaviour
         {
             jumpReleased = true;
             jumpInput = false;
+        }
+    }
+
+    public void Action2(InputAction.CallbackContext context)
+    {
+        if (context.started && controlEnabled)
+        {
+            Debug.Log("Action2!");
+            onAction2.Invoke();
         }
     }
 }
